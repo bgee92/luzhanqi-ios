@@ -163,7 +163,7 @@ func catalog(_ s: Strings) -> [TextEntry] {
     @Test func englishHasNoChineseOrFullWidthPunctuation() {
         for entry in Self.english {
             if !entry.allowsChinese {
-                #expect(!entry.text.contains(where: \.isCJK), "\(entry.name) contains Chinese: \(entry.text)")
+                #expect(!entry.text.contains { $0.isCJK }, "\(entry.name) contains Chinese: \(entry.text)")
             }
             #expect(!entry.text.contains(where: { "，。：！？；、“”".contains($0) }), "\(entry.name) uses Chinese punctuation: \(entry.text)")
         }

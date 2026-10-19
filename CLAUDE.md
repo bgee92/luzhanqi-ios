@@ -13,10 +13,17 @@ swift test --package-path Packages/LuzhanqiKit                         # all eng
 swift test --package-path Packages/LuzhanqiKit --filter CombatTests    # one suite
 swift test --package-path Packages/LuzhanqiKit --filter "CombatTests/landmines"  # one test
 xcodegen                                                                # regenerate Luzhanqi.xcodeproj from project.yml
-xcodebuild -scheme Luzhanqi -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -scheme Luzhanqi -destination 'platform=iOS Simulator,name=iPhone 17' build
+xcodebuild test -project Luzhanqi.xcodeproj -scheme Luzhanqi -destination 'platform=iOS Simulator,name=Luzhanqi Tests'   # everything
+#   add -only-testing:LuzhanqiTests (app logic + text) or -only-testing:LuzhanqiUITests (UI), or e.g. -only-testing:LuzhanqiTests/StringsTests
 ```
 
-- Tests use Swift Testing (`import Testing`, `@Test`, `#expect`), not XCTest.
+- **TESTING.md** documents every test layer, what each suite covers, and the text-review results. Read it before adding features.
+- Run app and UI tests on the dedicated `Luzhanqi Tests` simulator (`xcrun simctl create "Luzhanqi Tests" "iPhone 17"`), never on the simulator the user runs from Xcode.
+- UI tests launch the app with `-uiTesting` (clears settings and the saved game) and find controls by accessibility identifier (`home.startComputer`, `deploy.ready`, `game.status`, `piece.<square>`, `board`…). Keep identifiers when changing views.
+- Every string in `Strings.swift` must be listed in `catalog()` in `AppTests/StringsTests.swift`. A test parses `Strings.swift` and fails otherwise; the catalog drives the English/Chinese grammar and punctuation checks.
+
+- Engine and app-logic tests use Swift Testing (`import Testing`, `@Test`, `#expect`). UI tests use XCTest, which UI testing requires.
 - `RulesConformanceTests` checks the engine against an independent reference implementation. **It parses the board diagram in RULES.md**, so the diagram's exact layout is load-bearing: stations are at character column 9 + 4×file, links are in between, and the connector lines hold `│ ║ \ / ^`. If you change the board rules, update the diagram and the reference generator in that file, not just the engine.
 - The AI self-play test (`selfPlayIsLegalAndHardBeatsEasy`) takes about 30 s in debug.
 - `Luzhanqi.xcodeproj` is generated; edit `project.yml`, never the project file.
