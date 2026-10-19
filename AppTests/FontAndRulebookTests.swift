@@ -144,7 +144,7 @@ import Testing
         #expect(g.unit == 1)
         #expect(g.center(of: Position(name: "a1")!) == CGPoint(x: 50, y: 775))
         #expect(g.center(of: Position(name: "e12")!) == CGPoint(x: 450, y: 31))
-        #expect(g.center(of: Position(name: "c6")!).y == 6 * 62 + 31 + 62)  // below the frontier row
+        #expect(g.center(of: Position(name: "c6")!).y == CGFloat(6 * 62 + 31 + 62))  // below the frontier row
         #expect(g.pieceSize == CGSize(width: 88, height: 54))
     }
 

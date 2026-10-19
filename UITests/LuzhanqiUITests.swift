@@ -99,8 +99,9 @@ final class LuzhanqiUITests: XCTestCase {
         XCTAssertEqual(open.value as? String, "0")
         open.switches.firstMatch.exists ? open.switches.firstMatch.tap() : open.tap()
         XCTAssertEqual(open.value as? String, "1")
-        app.buttons["Draw after no battles for"].tap()
-        app.buttons["Never"].tap()
+        element(app, "settings.drawLimit").tap()
+        app.buttons["Never"].firstMatch.tap()
+        waitForLabel(element(app, "settings.drawLimit"), contains: "Never", timeout: 5)
         element(app, "settings.done").tap()
 
         app.terminate()
@@ -108,8 +109,7 @@ final class LuzhanqiUITests: XCTestCase {
         element(relaunched, "home.settings").tap()
         waitFor(element(relaunched, "settings.openPieces"))
         XCTAssertEqual(element(relaunched, "settings.openPieces").value as? String, "1")
-        XCTAssertTrue(relaunched.buttons["Draw after no battles for"].staticTexts["Never"].exists
-                      || relaunched.staticTexts["Never"].exists)
+        waitForLabel(element(relaunched, "settings.drawLimit"), contains: "Never", timeout: 5)
     }
 
     // MARK: Deployment

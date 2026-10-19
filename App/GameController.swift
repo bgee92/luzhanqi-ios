@@ -241,7 +241,7 @@ final class GameController: Identifiable {
         let state: GameState
     }
 
-    private static var saveURL: URL {
+    static var saveURL: URL {
         URL.applicationSupportDirectory.appending(path: "SavedGame.json")
     }
 
@@ -259,13 +259,24 @@ final class GameController: Identifiable {
         try? FileManager.default.removeItem(at: saveURL)
     }
 
-    static var hasSave: Bool { FileManager.default.fileExists(atPath: saveURL.path(percentEncoded: false)) }
+    /// Whether there is a saved game that can be resumed.
+    static var hasSave: Bool { loadSave() != nil }
 
     /// The autosaved game in progress, if any.
     static func resume() -> GameController? {
-        guard let data = try? Data(contentsOf: saveURL),
-              let saved = try? JSONDecoder().decode(SavedGame.self, from: data) else { return nil }
-        return GameController(saved: saved)
+        loadSave().map(GameController.init(saved:))
+    }
+
+    /// Reads the save, discarding it if it is unreadable, finished, or doesn't
+    /// describe a possible game (a damaged or edited file must not crash the app).
+    private static func loadSave() -> SavedGame? {
+        guard let data = try? Data(contentsOf: saveURL) else { return nil }
+        guard let saved = try? JSONDecoder().decode(SavedGame.self, from: data),
+              saved.state.isWellFormed, !saved.state.isOver else {
+            deleteSave()
+            return nil
+        }
+        return saved
     }
 
     private init(saved: SavedGame) {
@@ -289,7 +300,7 @@ final class GameController: Identifiable {
 extension GameController {
     /// Opens straight onto one screen for screenshots and UI review, since the
     /// Simulator can't be tapped from the command line. Launch with
-    /// `-demo deploy|handoff|game|over`.
+    /// `-demo deploy|deploy-error|handoff|turn|game|over` (and `rules` or `settings`, handled by ContentView).
     static func demo(_ screen: String) -> GameController? {
         var rng = SeededGenerator(seed: 42)
         let mode = GameMode.computer(human: .red, difficulty: .medium)
@@ -297,6 +308,19 @@ extension GameController {
         case "deploy":
             let controller = GameController(mode: mode, rules: .standard)
             controller.selected = controller.draft.first { $0.value == .general }?.key
+            return controller
+        case "deploy-error":
+            // The longest English setup message, to check the hint area doesn't grow.
+            let controller = GameController(mode: mode, rules: .standard)
+            controller.setupViolation = .landmineOutsideBackRows
+            return controller
+        case "turn":
+            // Pass-and-play, just after Red's move: the "Done — pass to Blue" button.
+            let controller = GameController(mode: .passAndPlay, rules: .standard)
+            controller.confirmDeployment(); controller.acceptHandoff(); controller.confirmDeployment(); controller.acceptHandoff()
+            if let move = controller.playerView?.legalMoves().first(where: { controller.playerView?[$0.to] != nil }) {
+                controller.tapBoard(move.from); controller.tapBoard(move.to)
+            }
             return controller
         case "handoff":
             let controller = GameController(mode: .passAndPlay, rules: .standard)

@@ -21,6 +21,7 @@ xcodebuild test -project Luzhanqi.xcodeproj -scheme Luzhanqi -destination 'platf
 - **TESTING.md** documents every test layer, what each suite covers, and the text-review results. Read it before adding features.
 - Run app and UI tests on the dedicated `Luzhanqi Tests` simulator (`xcrun simctl create "Luzhanqi Tests" "iPhone 17"`), never on the simulator the user runs from Xcode.
 - UI tests launch the app with `-uiTesting` (clears settings and the saved game) and find controls by accessibility identifier (`home.startComputer`, `deploy.ready`, `game.status`, `piece.<square>`, `board`…). Keep identifiers when changing views.
+- Refresh `Screenshots/` with `ScreenshotTests` (command in TESTING.md), not `simctl io screenshot`, which returns stale frames on a headless simulator.
 - Every string in `Strings.swift` must be listed in `catalog()` in `AppTests/StringsTests.swift`. A test parses `Strings.swift` and fails otherwise; the catalog drives the English/Chinese grammar and punctuation checks.
 
 - Engine and app-logic tests use Swift Testing (`import Testing`, `@Test`, `#expect`). UI tests use XCTest, which UI testing requires.

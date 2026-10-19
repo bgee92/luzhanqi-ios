@@ -163,6 +163,27 @@ import Testing
         #expect(resumed.mode == c.mode)
     }
 
+    @Test func aDamagedSaveIsDiscardedInsteadOfCrashing() throws {
+        let url = GameController.saveURL
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+        // Not JSON at all.
+        try Data("not a saved game".utf8).write(to: url)
+        #expect(!GameController.hasSave)
+        #expect(!FileManager.default.fileExists(atPath: url.path(percentEncoded: false)), "the damaged file is removed")
+
+        // Valid JSON describing an impossible board (one square missing).
+        let c = computerGame()
+        c.confirmDeployment()
+        var json = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        var state = try #require(json["state"] as? [String: Any])
+        state["squares"] = (state["squares"] as! [Any]).dropLast().map { $0 }
+        json["state"] = state
+        try JSONSerialization.data(withJSONObject: json).write(to: url)
+        #expect(GameController.resume() == nil)
+        #expect(!GameController.hasSave)
+    }
+
     // MARK: Pass and play
 
     @Test func passAndPlayHandsThePhoneOverAtEveryStep() {

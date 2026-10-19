@@ -86,6 +86,22 @@ public struct GameState: Codable, Sendable {
 
     public var isOver: Bool { result != nil }
 
+    /// Whether this state could have come from a real game: a full board, each
+    /// piece at most once, and no side with more pieces of a rank than its army
+    /// has. Use it to reject a damaged or edited save before playing it.
+    public var isWellFormed: Bool {
+        guard squares.count == Board.count else { return false }
+        let pieces = squares.compactMap { $0 }
+        guard Set(pieces.map(\.id)).count == pieces.count,
+              pieces.allSatisfy({ (0..<Board.count).contains($0.id) }) else { return false }
+        for side in Side.allCases {
+            for rank in Rank.allCases where pieces.filter({ $0.side == side && $0.rank == rank }).count > rank.count {
+                return false
+            }
+        }
+        return true
+    }
+
     /// Plays `move` for the side to move.
     @discardableResult
     public mutating func apply(_ move: Move) throws -> MoveRecord {

@@ -32,6 +32,7 @@ To run one suite or test, name it: `-only-testing:LuzhanqiTests/StringsTests`, o
 | `MovementTests` | Road steps, straight railroad runs, Engineers turning corners, mountains, camps, immobile pieces, illegal moves rejected |
 | `CombatTests` | Every battle outcome, Flag capture, Field Marshal and empty-HQ reveals, no-move loss, draws |
 | `PlayerViewTests` | Hidden ranks stay hidden, Open mode, legal moves from a player's view, saving and loading |
+| `SaveValidationTests` | A damaged or edited save is rejected: off-board squares, a short board, impossible armies, duplicate pieces |
 | `RulesConformanceTests` | The engine against an independent reference built from the `RULES.md` board diagram: every piece on every square, 4,000 random positions, every from/to pair on 250 positions, every attacker/defender pair, 60 full games |
 | `BeliefsTests`, `AIPlayerTests` | What the computer deduces about hidden pieces, legal computer setups, taking a revealed Flag, avoiding known losing attacks, Hard beating Easy |
 
@@ -40,7 +41,7 @@ To run one suite or test, name it: `-only-testing:LuzhanqiTests/StringsTests`, o
 | Suite | What it checks |
 |---|---|
 | `AppSettingsTests` | First-launch defaults, every setting persisting across launches, settings becoming game rules, language names and locales |
-| `GameControllerTests` | Deployment (selecting, swapping, refused swaps with a reason, Shuffle, Suggested), starting a game, the computer moving first or replying, taps that aren't moves changing nothing, resigning, autosave and resume, every pass-and-play hand-off, announcement tone |
+| `GameControllerTests` | Deployment (selecting, swapping, refused swaps with a reason, Shuffle, Suggested), starting a game, the computer moving first or replying, taps that aren't moves changing nothing, resigning, autosave and resume, a damaged save being discarded instead of crashing, every pass-and-play hand-off, announcement tone |
 | `StringsTests` | Every string the app can show, in both languages (see below) |
 | `FontCoverageTests` | Every Chinese character the app or rulebook uses exists in the bundled fonts, and the fonts register under the names the code uses |
 | `RulebookTests` | Both rulebooks parse; the rules page finds the board diagram, piece table and Battles heading it replaces; the English and Chinese rulebooks have the same structure; tables are rectangular; Settings names match the rulebook's Variants table |
@@ -80,6 +81,21 @@ Each test launches the app with `-uiTesting`, which clears saved settings and an
 | `testResigningShowsDefeatAndRematchStartsANewGame` | Resign → confirm → "Defeat" and "You resigned." → Rematch returns to deployment |
 | `testPassAndPlayHidesTheBoardBetweenTurns` | Both deployments with hand-offs, a move, "Done — pass to Blue", and the board hidden during every hand-off |
 | `testRulesPageInBothLanguages` | The rules page shows the board, the piece list and the movement examples in English and Chinese |
+
+### Screenshots for review
+
+`ScreenshotTests` captures every screen in both languages into a folder, using the debug-only `-demo` launch options. It is skipped in normal runs. To refresh `Screenshots/`:
+
+```sh
+TEST_RUNNER_SCREENSHOTS_DIR="$PWD/Screenshots" xcodebuild test -project Luzhanqi.xcodeproj -scheme Luzhanqi \
+  -destination 'platform=iOS Simulator,name=Luzhanqi Tests' -only-testing:LuzhanqiUITests/ScreenshotTests
+```
+
+Take screenshots this way rather than with `xcrun simctl io … screenshot`. Without the Simulator window open, that command can return a stale frame.
+
+### Bugs the UI tests found
+
+- **Resume button missing after Save & quit.** The home screen only checked for a saved game when it first appeared, and closing a game screen doesn't count as appearing again. So "Resume saved game" didn't show until the app was relaunched. The check now runs whenever a game screen closes (`testFullGameAgainstTheComputer`).
 
 ## Text review
 

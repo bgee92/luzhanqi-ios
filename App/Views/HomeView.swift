@@ -3,8 +3,10 @@ import SwiftUI
 
 struct HomeView: View {
     let start: (GameController) -> Void
+    /// Whether a saved game exists. Owned by the caller, which re-checks it
+    /// whenever a game screen closes (onAppear doesn't run again then).
+    let hasSave: Bool
     @Environment(AppSettings.self) private var settings
-    @State private var hasSave = GameController.hasSave
     @State private var showingSettings = false
 
     var body: some View {
@@ -58,7 +60,6 @@ struct HomeView: View {
             .navigationTitle(strings.appTitle)
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingSettings) { SettingsView().preferredColorScheme(.light) }
-            .onAppear { hasSave = GameController.hasSave }
         }
         // The home screen is night-dark, so the status bar text is light.
         .preferredColorScheme(.dark)
@@ -212,6 +213,7 @@ struct SettingsView: View {
                         Text(strings.drawNever).tag(0)
                         ForEach([40, 60, 100], id: \.self) { Text(strings.turns($0)).tag($0) }
                     }
+                    .accessibilityIdentifier("settings.drawLimit")
                 } header: {
                     Text(strings.rules)
                 } footer: {

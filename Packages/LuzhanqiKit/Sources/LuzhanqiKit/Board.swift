@@ -38,6 +38,19 @@ public struct Position: Hashable, Codable, Sendable, Comparable, CustomStringCon
         self.col = col
     }
 
+    private enum CodingKeys: String, CodingKey { case row, col }
+
+    /// Decoding rejects off-board squares, so a damaged save can't create one.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let row = try container.decode(Int.self, forKey: .row)
+        let col = try container.decode(Int.self, forKey: .col)
+        guard (0..<Board.rows).contains(row), (0..<Board.cols).contains(col) else {
+            throw DecodingError.dataCorruptedError(forKey: .row, in: container, debugDescription: "Off-board position (\(row), \(col))")
+        }
+        self.init(row, col)
+    }
+
     public init(index: Int) {
         self.init(index / Board.cols, index % Board.cols)
     }
